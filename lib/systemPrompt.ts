@@ -1,8 +1,3 @@
-/**
- * The extraction system prompt. Kept in its own module so it can be iterated on
- * without touching the API route or the UI.
- */
-
 export const DISCLAIMER =
   "This tool doesn't provide medical advice — it's for structuring intake information only.";
 

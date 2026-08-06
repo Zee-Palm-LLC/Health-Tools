@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
+import { Instrument_Sans } from "next/font/google";
 
 import "./globals.css";
+
+const sans = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Symptom Intake Assistant",
@@ -10,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="bg-slate-50 text-slate-900 antialiased">{children}</body>
+    <html lang="en" className={sans.variable}>
+      <body className="bg-canvas font-sans text-ink antialiased">{children}</body>
     </html>
   );
 }

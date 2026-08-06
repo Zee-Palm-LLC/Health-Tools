@@ -6,7 +6,6 @@ export interface ChatResult {
   extracted: IntakeRecord | null;
 }
 
-/** Posts the conversation so far to the API route and returns the assistant turn. */
 export async function sendChat(messages: ChatMessage[]): Promise<ChatResult> {
   const response = await fetch("/api/chat", {
     method: "POST",

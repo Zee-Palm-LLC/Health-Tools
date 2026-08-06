@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-/**
- * The shape the model is constrained to. `extracted` stays null until enough
- * information has been gathered to fill in a meaningful intake record.
- */
-
 export const severityLevels = ["mild", "moderate", "severe", "unknown"] as const;
 
 export const intakeRecordSchema = z.object({
