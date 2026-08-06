@@ -1,24 +1,33 @@
+# Patterns are intentionally unanchored so they apply inside every tool directory.
+
 # dependencies
-/node_modules
+node_modules/
+.pnp
+.pnp.js
 
-# next.js
-/.next/
-/out/
+# builds
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
 next-env.d.ts
-
-# production
-/build
 
 # secrets — never commit real keys
 .env
 .env.local
 .env.*.local
 
+# python tools
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
 # misc
 .DS_Store
 *.pem
 .vercel
-*.tsbuildinfo
 
 # debug logs
 npm-debug.log*

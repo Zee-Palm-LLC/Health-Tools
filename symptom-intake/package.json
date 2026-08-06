@@ -1,5 +1,5 @@
 {
-  "name": "zp-symptom-bot",
+  "name": "symptom-intake",
   "version": "0.1.0",
   "private": true,
   "description": "Conversational health symptom intake chatbot that turns casual complaints into structured intake data.",

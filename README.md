@@ -1,124 +1,51 @@
-# Symptom Intake Assistant
+# Health Tools
 
-A small web app that turns a casual health complaint — *"I've had a headache and felt tired since yesterday"* — into a structured intake record.
+A collection of open-source health tools — symptom intake, booking automation, exercise form detection, and more. Built by [Zee Palm](https://zeepalm.com).
 
-You describe a symptom in plain language. The assistant asks one or two clarifying questions, then renders a clean summary card with the symptom, duration, severity, associated symptoms, and any red flags worth routing to a clinician.
+Each tool is a self-contained project in its own directory, with its own dependencies, setup instructions, and README. There is no shared build system: clone the repo, `cd` into the tool you want, and follow its README. Tools are deliberately independent so they can use whatever stack fits the problem.
 
-> **This is not a diagnostic tool.** It does not diagnose, treat, or give medical advice. It only asks clarifying questions and formats intake information. Nothing it produces is a clinical assessment, and it is not a substitute for talking to a qualified healthcare professional.
+> **None of these tools provide medical advice or clinical decision-making.** They handle intake, scheduling, and form-factor problems around care — not care itself. Each tool states its own limitations in its README.
 
-## What it does
+## Tools
 
-- Accepts a free-text symptom description
-- Asks at most two clarifying questions, one at a time
-- Extracts a structured record:
-
-  ```json
-  {
-    "symptom": "Headache",
-    "duration": "Since yesterday morning",
-    "severity": "moderate",
-    "associated_symptoms": ["Fatigue", "Sensitivity to light"],
-    "red_flags": ["Stiff neck"]
-  }
-  ```
-
-- Renders that record as a summary card, highlighting red flags
-
-Red flags are a **routing signal**, not an interpretation — the assistant lists what was reported and never explains what it might mean.
-
-## Tech stack
-
-- **Next.js 14** (App Router) + **TypeScript** in strict mode
-- **Tailwind CSS**
-- **Claude** via the [Anthropic TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript), using structured outputs so the model's response is schema-validated
-- Deployed on **Vercel**
-
-No database, no auth, no persistence — the conversation lives in React state for the length of the session.
+| Tool | What it does | Stack | Status |
+| ---- | ------------ | ----- | ------ |
+| [**symptom-intake**](symptom-intake) | Turns a casual health complaint into a structured intake record — symptom, duration, severity, associated symptoms, red flags | Next.js 14, TypeScript, Claude | ✅ Available |
+| **booking-automation** | Automates appointment scheduling and reminders for clinics | TBD | 🚧 Planned |
+| **exercise-form-detection** | Detects and scores exercise form from video for gyms and physio | TBD | 🚧 Planned |
 
 ## Getting started
 
-**Prerequisites:** Node.js 18.17 or newer, and an [Anthropic API key](https://console.anthropic.com/settings/keys).
-
 ```bash
-git clone https://github.com/<your-org>/zp-symptom-bot.git
-cd zp-symptom-bot
-npm install
+git clone https://github.com/Zee-Palm-LLC/Health-Tools.git
+cd Health-Tools/symptom-intake
 ```
 
-Create your local environment file from the template:
+Then follow that tool's README. Every tool ships a `.env.example` listing the environment variables it needs — copy it to `.env.local` and fill in your own values. Real keys are never committed.
 
-```bash
-cp .env.example .env.local
-```
-
-Then open `.env.local` and set your key:
+## Repository layout
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+Health-Tools/
+├── README.md              you are here
+├── LICENSE
+├── .gitignore             shared ignore rules, applied across all tools
+└── symptom-intake/        each tool is fully self-contained
+    ├── README.md
+    ├── .env.example
+    └── ...
 ```
 
-`.env.local` is gitignored and must never be committed. The key is read server-side only — it is never sent to the browser.
+## Contributing
 
-Start the dev server:
+Adding a tool means adding a top-level directory. Each one should be independently runnable and ship with:
 
-```bash
-npm run dev
-```
+- a `README.md` covering what it does, its stack, setup steps, and its limitations
+- a `.env.example` if it needs configuration, with no real values
+- no committed secrets, build output, or dependencies
 
-Open [http://localhost:3000](http://localhost:3000).
-
-## Scripts
-
-| Command             | What it does                          |
-| ------------------- | ------------------------------------- |
-| `npm run dev`       | Start the dev server                  |
-| `npm run build`     | Production build                      |
-| `npm start`         | Serve the production build            |
-| `npm run lint`      | ESLint via `next lint`                |
-| `npm run typecheck` | `tsc --noEmit`                        |
-
-## Project structure
-
-```
-app/
-  page.tsx              Page shell (server component)
-  layout.tsx            Root layout
-  api/chat/route.ts     Server-side Claude call — the only place the API key is used
-components/
-  ChatWindow.tsx        Message list, input, loading + error state
-  IntakeSummaryCard.tsx Renders the extracted record
-lib/
-  systemPrompt.ts       The extraction prompt, kept separate for easy iteration
-  intakeSchema.ts       Zod schema the model output is constrained to
-  chatClient.ts         Browser-side fetch wrapper for /api/chat
-  types.ts              Types shared between the UI and the API route
-```
-
-## How it works
-
-`ChatWindow` posts the full conversation to `/api/chat`. The route calls Claude with the prompt from `lib/systemPrompt.ts` and a JSON schema derived from `lib/intakeSchema.ts`, so the response always arrives as:
-
-```ts
-{ reply: string, extracted: IntakeRecord | null }
-```
-
-`reply` is shown in the chat. `extracted` stays `null` until enough information has been gathered, at which point the summary card appears.
-
-Every call to Claude happens in the API route. The client never talks to the Anthropic API directly and never sees the key.
-
-## Deploying to Vercel
-
-1. Push the repo to GitHub and import it in Vercel.
-2. Add `ANTHROPIC_API_KEY` under **Settings → Environment Variables**.
-3. Deploy. No other configuration is needed.
-
-## Security notes
-
-- The API key lives only in `.env.local` (local) or Vercel environment variables (deployed), and is read via `process.env.ANTHROPIC_API_KEY` in the API route.
-- `.env.local` and `.env*.local` are gitignored.
-- Request bodies are validated with Zod before any model call.
-- No conversation data is stored or logged anywhere.
+Add a row to the table above so the tool is discoverable from the front door.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
