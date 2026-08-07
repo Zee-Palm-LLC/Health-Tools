@@ -44,6 +44,15 @@ describe("buildEscalationFlags", () => {
     ]);
   });
 
+  it("normalizes awkward 'since N days' duration phrasing in flags", () => {
+    expect(
+      buildEscalationFlags({
+        ...base,
+        duration: "since 6 days",
+      }),
+    ).toEqual(["Moderate stomach pain lasting 6 days"]);
+  });
+
   it("flags severe symptoms even without a long duration", () => {
     expect(
       buildEscalationFlags({

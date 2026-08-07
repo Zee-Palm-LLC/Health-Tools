@@ -1,15 +1,8 @@
 import type { IntakeRecord, Severity } from "./intakeSchema";
 
-/** Days of moderate+ symptoms that warrant clinician routing. */
 export const MODERATE_PLUS_DURATION_DAYS = 3;
-
-/** Days of any stated severity that counts as persistent / lingering. */
 export const PERSISTENT_DURATION_DAYS = 14;
 
-/**
- * Classic urgent features the model should copy into red_flags when reported.
- * Kept as plain language so the prompt and tests share one list.
- */
 export const CLASSIC_RED_FLAG_EXAMPLES = [
   "chest pain",
   "difficulty breathing",
@@ -23,10 +16,6 @@ export const CLASSIC_RED_FLAG_EXAMPLES = [
   "suicidal thoughts",
 ] as const;
 
-/**
- * Prompt section: single source of truth for how the model fills red_flags.
- * Deterministic enrichment in enrichIntakeRecord still applies after the model responds.
- */
 export const RED_FLAG_PROMPT_SECTION = `## Red flags (routing signals)
 
 red_flags is an array of features that intake protocols commonly escalate. Listing one is a routing signal, not a diagnosis — never explain what it might mean.
@@ -60,7 +49,6 @@ const PHRASE_DAYS: Array<{ pattern: RegExp; days: number }> = [
   { pattern: /\bfor\s+months\b/i, days: 60 },
 ];
 
-/** Best-effort duration → days. Returns null when the phrase can't be estimated. */
 export function estimateDurationDays(duration: string): number | null {
   const trimmed = duration.trim();
   if (!trimmed) return null;
@@ -100,14 +88,22 @@ function titleSeverity(severity: Exclude<Severity, "unknown">): string {
   return severity.charAt(0).toUpperCase() + severity.slice(1);
 }
 
-/**
- * Deterministic escalation flags derived from symptom + duration + severity.
- * Ensures cases like "moderate stomach pain for 5 days" always route for review.
- */
+export function formatDurationForFlag(duration: string): string {
+  const trimmed = duration.trim();
+  const sinceMatch = trimmed.match(
+    /^since\s+(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months)\b/i,
+  );
+  if (sinceMatch) {
+    return `${sinceMatch[1]} ${sinceMatch[2].toLowerCase()}`;
+  }
+  return trimmed;
+}
+
 export function buildEscalationFlags(record: IntakeRecord): string[] {
   const flags: string[] = [];
   const days = estimateDurationDays(record.duration);
-  const { symptom, duration, severity } = record;
+  const { symptom, severity } = record;
+  const durationLabel = formatDurationForFlag(record.duration);
 
   if (severity === "severe") {
     flags.push(`Severe ${symptom}`);
@@ -116,19 +112,14 @@ export function buildEscalationFlags(record: IntakeRecord): string[] {
   const isModeratePlus = severity === "moderate" || severity === "severe";
 
   if (isModeratePlus && days !== null && days >= MODERATE_PLUS_DURATION_DAYS) {
-    flags.push(`${titleSeverity(severity)} ${symptom} lasting ${duration}`);
-  } else if (
-    severity === "mild" &&
-    days !== null &&
-    days >= PERSISTENT_DURATION_DAYS
-  ) {
-    flags.push(`Persistent ${symptom} lasting ${duration}`);
+    flags.push(`${titleSeverity(severity)} ${symptom} lasting ${durationLabel}`);
+  } else if (severity === "mild" && days !== null && days >= PERSISTENT_DURATION_DAYS) {
+    flags.push(`Persistent ${symptom} lasting ${durationLabel}`);
   }
 
   return flags;
 }
 
-/** Merge model-reported red_flags with deterministic escalation flags. */
 export function enrichIntakeRecord(record: IntakeRecord): IntakeRecord {
   return {
     ...record,

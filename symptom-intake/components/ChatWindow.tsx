@@ -90,7 +90,6 @@ export default function ChatWindow() {
     void send(input);
   }
 
-  // Explicit rather than implicit form submission, so IME composition doesn't submit early.
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
