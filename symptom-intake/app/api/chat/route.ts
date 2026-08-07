@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { chatRequestSchema } from "@/lib/chatRequest";
 import { chatResponseSchema } from "@/lib/intakeSchema";
+import { enrichIntakeRecord } from "@/lib/redFlags";
 import { SYSTEM_PROMPT } from "@/lib/systemPrompt";
 
 export const runtime = "nodejs";
@@ -56,7 +57,9 @@ export async function POST(request: Request) {
       return errorResponse("The model returned an unexpected response. Please try again.", 502);
     }
 
-    return NextResponse.json({ reply: result.reply, extracted: result.extracted });
+    const extracted = result.extracted ? enrichIntakeRecord(result.extracted) : null;
+
+    return NextResponse.json({ reply: result.reply, extracted });
   } catch (error) {
     if (error instanceof Anthropic.AuthenticationError) {
       return errorResponse("The configured Anthropic API key was rejected.", 500);

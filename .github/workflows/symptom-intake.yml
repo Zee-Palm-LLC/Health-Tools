@@ -1,0 +1,41 @@
+name: symptom-intake
+
+on:
+  push:
+    branches: [main]
+    paths: ["symptom-intake/**", ".github/workflows/symptom-intake.yml"]
+  pull_request:
+    paths: ["symptom-intake/**", ".github/workflows/symptom-intake.yml"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: symptom-intake
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: symptom-intake/package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high

@@ -12,7 +12,7 @@ const PLACEHOLDER = "Describe your symptom…";
 const SUGGESTIONS = [
   "I've had a headache and felt tired since yesterday",
   "Really bad headache since this morning, plus a stiff neck and a fever",
-  "Sore throat and a mild fever since Monday",
+  "Moderate stomach pain for 5 days",
 ];
 
 type Turn = ChatMessage & { record?: IntakeRecord };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { MODERATE_PLUS_DURATION_DAYS, RED_FLAG_PROMPT_SECTION } from "./redFlags";
 import { DISCLAIMER, SYSTEM_PROMPT } from "./systemPrompt";
 
 describe("system prompt", () => {
@@ -21,5 +22,18 @@ describe("system prompt", () => {
 
   it("forbids repeating the primary symptom in associated_symptoms", () => {
     expect(SYSTEM_PROMPT).toMatch(/must not be repeated in associated_symptoms/i);
+  });
+
+  it("embeds the shared red-flag routing rules", () => {
+    expect(SYSTEM_PROMPT).toContain(RED_FLAG_PROMPT_SECTION);
+  });
+
+  it("escalates moderate-plus symptoms by duration", () => {
+    expect(SYSTEM_PROMPT).toContain(String(MODERATE_PLUS_DURATION_DAYS));
+    expect(SYSTEM_PROMPT).toMatch(/severity is "moderate" or "severe"/i);
+  });
+
+  it("uses leftover clarifying questions for a safety screen", () => {
+    expect(SYSTEM_PROMPT).toMatch(/brief safety screen/i);
   });
 });
