@@ -36,4 +36,8 @@ describe("system prompt", () => {
   it("uses leftover clarifying questions for a safety screen", () => {
     expect(SYSTEM_PROMPT).toMatch(/brief safety screen/i);
   });
+
+  it("requires a single JSON object response", () => {
+    expect(SYSTEM_PROMPT).toMatch(/single valid json object/i);
+  });
 });

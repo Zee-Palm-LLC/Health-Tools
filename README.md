@@ -10,7 +10,7 @@ Each tool is a self-contained project in its own directory, with its own depende
 
 | Tool | What it does | Stack | Status |
 | ---- | ------------ | ----- | ------ |
-| [**symptom-intake**](symptom-intake) | Turns a casual health complaint into a structured intake record — symptom, duration, severity, associated symptoms, red flags | Next.js 14, TypeScript, DeepSeek | ✅ Available |
+| [**symptom-intake**](symptom-intake) | Turns a casual health complaint into a structured intake record — symptom, duration, severity, associated symptoms, red flags | Next.js, TypeScript, DeepSeek | ✅ Available |
 | **booking-automation** | Automates appointment scheduling and reminders for clinics | TBD | 🚧 Planned |
 | **exercise-form-detection** | Detects and scores exercise form from video for gyms and physio | TBD | 🚧 Planned |
 
