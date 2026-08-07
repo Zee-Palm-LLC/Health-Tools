@@ -1,4 +1,5 @@
 import type { IntakeRecord } from "@/lib/intakeSchema";
+import { enrichIntakeRecord } from "@/lib/redFlags";
 import type { ChatMessage } from "@/lib/types";
 
 export interface ChatResult {
@@ -23,5 +24,16 @@ export async function sendChat(messages: ChatMessage[]): Promise<ChatResult> {
     throw new Error(message);
   }
 
-  return payload as ChatResult;
+  if (!payload || typeof payload !== "object") {
+    throw new Error("The assistant returned an unexpected response.");
+  }
+
+  const reply = "reply" in payload ? String((payload as { reply: unknown }).reply ?? "") : "";
+  const extractedRaw =
+    "extracted" in payload ? (payload as { extracted: IntakeRecord | null }).extracted : null;
+
+  return {
+    reply,
+    extracted: extractedRaw ? enrichIntakeRecord(extractedRaw) : null,
+  };
 }
