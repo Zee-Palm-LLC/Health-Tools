@@ -32,14 +32,15 @@ Red flags are a **routing signal**, not an interpretation — the assistant list
 
 - **Next.js 14** (App Router) + **TypeScript** in strict mode
 - **Tailwind CSS**
-- **Claude** via the [Anthropic TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript), using structured outputs so the model's response is schema-validated
+- **DeepSeek** (`deepseek-chat`) via the OpenAI-compatible SDK, in JSON mode
+- **Zod** to validate every model response before it reaches the UI
 - Deployed on **Vercel**
 
 No database, no auth, no persistence — the conversation lives in React state for the length of the session.
 
 ## Getting started
 
-**Prerequisites:** Node.js 18.17 or newer, and an [Anthropic API key](https://console.anthropic.com/settings/keys).
+**Prerequisites:** Node.js 18.17 or newer, and a [DeepSeek API key](https://platform.deepseek.com/api_keys).
 
 ```bash
 git clone https://github.com/Zee-Palm-LLC/Health-Tools.git
@@ -56,7 +57,7 @@ cp .env.example .env.local
 Then open `.env.local` and set your key:
 
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+DEEPSEEK_API_KEY=sk-...
 ```
 
 `.env.local` is gitignored and must never be committed. The key is read server-side only — it is never sent to the browser.
@@ -85,20 +86,20 @@ Open [http://localhost:3000](http://localhost:3000).
 app/
   page.tsx              Page shell (server component)
   layout.tsx            Root layout
-  api/chat/route.ts     Server-side Claude call — the only place the API key is used
+  api/chat/route.ts     Server-side DeepSeek call — the only place the API key is used
 components/
   ChatWindow.tsx        Message list, input, loading + error state
   IntakeSummaryCard.tsx Renders the extracted record
 lib/
   systemPrompt.ts       The extraction prompt, kept separate for easy iteration
-  intakeSchema.ts       Zod schema the model output is constrained to
+  intakeSchema.ts       Zod schema every model response is validated against
   chatClient.ts         Browser-side fetch wrapper for /api/chat
   types.ts              Types shared between the UI and the API route
 ```
 
 ## How it works
 
-`ChatWindow` posts the full conversation to `/api/chat`. The route calls Claude with the prompt from `lib/systemPrompt.ts` and a JSON schema derived from `lib/intakeSchema.ts`, so the response always arrives as:
+`ChatWindow` posts the full conversation to `/api/chat`. The route calls DeepSeek in JSON mode with the prompt from `lib/systemPrompt.ts`, then validates the reply against the Zod schema in `lib/intakeSchema.ts` before returning:
 
 ```ts
 { reply: string, extracted: IntakeRecord | null }
@@ -106,19 +107,19 @@ lib/
 
 `reply` is shown in the chat. `extracted` stays `null` until enough information has been gathered, at which point the summary card appears.
 
-Every call to Claude happens in the API route. The client never talks to the Anthropic API directly and never sees the key.
+Every call to DeepSeek happens in the API route. The client never talks to the DeepSeek API directly and never sees the key.
 
 ## Deploying to Vercel
 
 1. Import the repo in Vercel.
 2. Set **Root Directory** to `symptom-intake`. This repo holds several independent
    tools, so Vercel must be pointed at this one — the default root has no app to build.
-3. Add `ANTHROPIC_API_KEY` under **Settings → Environment Variables**.
+3. Add `DEEPSEEK_API_KEY` under **Settings → Environment Variables**.
 4. Deploy.
 
 ## Security notes
 
-- The API key lives only in `.env.local` (local) or Vercel environment variables (deployed), and is read via `process.env.ANTHROPIC_API_KEY` in the API route.
+- The API key lives only in `.env.local` (local) or Vercel environment variables (deployed), and is read via `process.env.DEEPSEEK_API_KEY` in the API route.
 - `.env.local` and `.env*.local` are gitignored.
 - Request bodies are validated with Zod before any model call.
 - No conversation data is stored or logged anywhere.
