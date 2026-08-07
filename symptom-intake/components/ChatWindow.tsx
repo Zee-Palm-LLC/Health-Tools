@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import IntakeSummaryCard from "@/components/IntakeSummaryCard";
 import { sendChat } from "@/lib/chatClient";
@@ -11,14 +11,16 @@ const PLACEHOLDER = "Describe your symptom…";
 
 const SUGGESTIONS = [
   "I've had a headache and felt tired since yesterday",
-  "Sharp stomach pain for two days, getting worse",
+  "Really bad headache since this morning, plus a stiff neck and a fever",
   "Sore throat and a mild fever since Monday",
 ];
+
+type Turn = ChatMessage & { record?: IntakeRecord };
 
 function Bubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
   return (
-    <div className={`flex animate-msg-in ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`flex shrink-0 animate-msg-in ${isUser ? "justify-end" : "justify-start"}`}>
       <p
         className={`max-w-[86%] whitespace-pre-wrap px-4 py-2.5 text-[0.9rem] leading-relaxed shadow-bubble ${
           isUser
@@ -34,7 +36,7 @@ function Bubble({ message }: { message: ChatMessage }) {
 
 function TypingIndicator() {
   return (
-    <div className="flex animate-msg-in justify-start" aria-live="polite" aria-label="Assistant is typing">
+    <div className="flex shrink-0 animate-msg-in justify-start" aria-live="polite" aria-label="Assistant is typing">
       <span className="flex items-center gap-1.5 rounded-[1.1rem] rounded-bl-md border border-hairline bg-white px-4 py-3.5 shadow-bubble">
         {[0, 200, 400].map((delay) => (
           <span
@@ -49,31 +51,33 @@ function TypingIndicator() {
 }
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [record, setRecord] = useState<IntakeRecord | null>(null);
   const scrollAnchor = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollAnchor.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isLoading, record]);
+  }, [turns, isLoading]);
 
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || isLoading) return;
 
-    const nextMessages: ChatMessage[] = [...messages, { role: "user", content: trimmed }];
-    setMessages(nextMessages);
+    const nextTurns: Turn[] = [...turns, { role: "user", content: trimmed }];
+    setTurns(nextTurns);
     setInput("");
     setError(null);
     setIsLoading(true);
 
     try {
-      const result = await sendChat(nextMessages);
-      setMessages([...nextMessages, { role: "assistant", content: result.reply }]);
-      if (result.extracted) setRecord(result.extracted);
+      const history: ChatMessage[] = nextTurns.map(({ role, content }) => ({ role, content }));
+      const result = await sendChat(history);
+      setTurns([
+        ...nextTurns,
+        { role: "assistant", content: result.reply, record: result.extracted ?? undefined },
+      ]);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Something went wrong.");
     } finally {
@@ -94,12 +98,12 @@ export default function ChatWindow() {
     }
   }
 
-  const isEmpty = messages.length === 0 && !isLoading;
+  const isEmpty = turns.length === 0 && !isLoading;
 
   return (
     <div className="flex flex-col gap-4">
       <div
-        className={`scrollbar-slim flex max-h-[28rem] flex-col gap-3 overflow-y-auto rounded-2xl border border-hairline bg-white/60 p-4 sm:p-5 ${
+        className={`flex flex-col gap-3 rounded-2xl border border-hairline bg-white/60 p-4 sm:p-5 ${
           isEmpty ? "min-h-[19rem]" : "min-h-[8rem]"
         }`}
       >
@@ -124,16 +128,17 @@ export default function ChatWindow() {
           </div>
         ) : (
           <>
-            {messages.map((message, index) => (
-              <Bubble key={`${index}-${message.role}`} message={message} />
+            {turns.map((turn, index) => (
+              <Fragment key={`${index}-${turn.role}`}>
+                <Bubble message={turn} />
+                {turn.record && <IntakeSummaryCard record={turn.record} />}
+              </Fragment>
             ))}
             {isLoading && <TypingIndicator />}
           </>
         )}
         <div ref={scrollAnchor} />
       </div>
-
-      {record && <IntakeSummaryCard record={record} />}
 
       {error && (
         <p
@@ -144,7 +149,10 @@ export default function ChatWindow() {
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      <form
+        onSubmit={handleSubmit}
+        className="sticky bottom-0 z-10 flex items-center gap-2 bg-canvas py-3"
+      >
         <label htmlFor="symptom-input" className="sr-only">
           Describe your symptoms
         </label>

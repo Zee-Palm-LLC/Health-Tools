@@ -49,7 +49,7 @@ export default function IntakeSummaryCard({ record }: { record: IntakeRecord }) 
   return (
     <section
       aria-label="Structured intake summary"
-      className="animate-card-in overflow-hidden rounded-2xl border border-hairline bg-white shadow-card"
+      className="animate-card-in shrink-0 overflow-hidden rounded-2xl border border-hairline bg-white shadow-card"
     >
       <header className="flex items-center justify-between gap-3 border-b border-hairline bg-accent-soft px-5 py-3.5">
         <div className="flex items-center gap-2 text-accent">
